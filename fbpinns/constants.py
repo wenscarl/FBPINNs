@@ -94,8 +94,8 @@ class Constants(ConstantsBase):
         self.SUMMARY_FREQ    = 250
         self.TEST_FREQ       = 5000
         self.MODEL_SAVE_FREQ = 10000
-        self.SHOW_FIGURES = True# whether to show figures
-        self.SAVE_FIGURES = False# whether to save figures
+        self.SHOW_FIGURES = False# whether to show figures
+        self.SAVE_FIGURES = True# whether to save figures
         self.CLEAR_OUTPUT = False# whether to clear output periodically
         ##########
         

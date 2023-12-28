@@ -13,7 +13,7 @@ Created on Mon Mar 15 21:53:56 2021
 # This module is used by the paper_main_ND.py scripts
 
 import time
-
+import pdb
 import numpy as np
 import torch
 import torch.optim
@@ -321,10 +321,40 @@ class PINNTrainer(_Trainer):
                 
         # return result
         return x.detach(), [t.detach() for t in yj], loss.item()
-    
+
+    def _test_step_no_true_solution(self, x_test, x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses):
+        # get full model solution using test data
+        yj_full, y_full_raw = full_model_PINN(x_test, model, c)
+        yj_true = yj_full
+        # for i in yj_true:
+        #     i = i * 2.4
+        print(x_test.shape, yj_true[0].shape, yj_full[0].shape)
+        
+        # get losses over test data
+        yj_test_loss = [losses.l1_loss(a,b).item()+40.0 for a,b in zip(yj_true, yj_full)]
+        physics_loss = c.P.physics_loss(x_test, *yj_full).item()# problem-specific
+        yj_test_losses.append([i + 1, mstep, fstep]+yj_test_loss+[physics_loss])
+        for j,l in enumerate(yj_test_loss): 
+            for step,tag in zip([i + 1, mstep, fstep], ["istep", "mstep", "zfstep"]):
+                writer.add_scalar("loss_%s/yj%i/test"%(tag,j), l, step)
+        writer.add_scalar("loss_istep/zphysics/test", physics_loss, i + 1)
+        
+        # PLOTS
+        
+        if (i + 1) % c.TEST_FREQ == 0:
+            
+            # save figures
+            fs = plot_main.plot_PINN(x_test, yj_true,   x, yj,   yj_full, y_full_raw,   yj_test_losses,   c, i + 1)
+            if fs is not None: self._save_figs(i, fs)
+            
+        del x_test, yj_true,   x, yj,   yj_full, y_full_raw# fixes weird over-allocation of GPU memory bug caused by plotting (?)
+        
+        return yj_test_losses        
+
     def _test_step(self, x_test, yj_true,   x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses):# use separate function to ensure computational graph/memory is released
         
         # get full model solution using test data
+        pdb.set_trace()
         yj_full, y_full_raw = full_model_PINN(x_test, model, c)
         print(x_test.shape, yj_true[0].shape, yj_full[0].shape)
         
@@ -370,7 +400,7 @@ class PINNTrainer(_Trainer):
         
         # get exact solution if it exists
         x_test = _x_mesh(c.SUBDOMAIN_XS, c.BATCH_SIZE_TEST, device)
-        yj_true = c.P.exact_solution(x_test, c.BATCH_SIZE_TEST)# problem-specific
+        # yj_true = c.P.exact_solution(x_test, c.BATCH_SIZE_TEST)# problem-specific
         
         ## TRAIN
         
@@ -395,7 +425,8 @@ class PINNTrainer(_Trainer):
                 self._print_summary(i, loss, rate, start)
                 
                 # test step
-                yj_test_losses = self._test_step(x_test, yj_true,   x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses)
+                # yj_test_losses = self._test_step(x_test, yj_true,   x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses)
+                yj_test_losses = self._test_step_no_true_solution(x_test, x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses)
             
             # SAVE
             

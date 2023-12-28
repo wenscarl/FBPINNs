@@ -81,26 +81,26 @@ random = False
 
 # Cos Cos w=15
 
-P = problems.Cos_Cos2D_1(w=15, A=0)
-subdomain_xs = get_subdomain_xs([np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]),
-                                 np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2])], 
-                                [2*np.pi, 2*np.pi])
-boundary_n = (1/P.w,)
-y_n = (0,1/P.w)
-batch_size = (900,900)
-batch_size_test = (1000,1000)
+# P = problems.Cos_Cos2D_1(w=15, A=0)
+# subdomain_xs = get_subdomain_xs([np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]),
+#                                  np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2])], 
+#                                 [2*np.pi, 2*np.pi])
+# boundary_n = (1/P.w,)
+# y_n = (0,1/P.w)
+# batch_size = (900,900)
+# batch_size_test = (1000,1000)
 
-n_steps = 50000
-n_hidden, n_layers = 128, 5
-runs.append(run_PINN())
+# n_steps = 50000
+# n_hidden, n_layers = 128, 5
+# runs.append(run_PINN())
 
-n_hidden, n_layers = 16, 2
-width = 0.7
-subdomain_ws = get_subdomain_ws(subdomain_xs, width)
-for A,args,n_steps in [(AllActiveSchedulerND, (), 50000),
-                       (LineActiveSchedulerND, (np.array([0,]),1), 100000),
-                       (PointActiveSchedulerND, (np.array([0,0]),), 100000)]:
-    runs.append(run_FBPINN())
+# n_hidden, n_layers = 16, 2
+# width = 0.7
+# subdomain_ws = get_subdomain_ws(subdomain_xs, width)
+# for A,args,n_steps in [(AllActiveSchedulerND, (), 50000),
+#                        (LineActiveSchedulerND, (np.array([0,]),1), 100000),
+#                        (PointActiveSchedulerND, (np.array([0,0]),), 100000)]:
+#     runs.append(run_FBPINN())
 
 
 # Burgers
@@ -116,20 +116,20 @@ n_steps = 50000
 n_hidden, n_layers = 64, 4
 runs.append(run_PINN())
 
-n_steps = 50000
-n_hidden, n_layers = 16, 2
-A, args = AllActiveSchedulerND, ()
-for width in [0.1, 0.5, 0.7]:
-    subdomain_ws = get_subdomain_ws(subdomain_xs, width)
-    runs.append(run_FBPINN())
-width="0.5thin"
-subdomain_ws = [np.array([0.25, 0.25, 0.05, 0.25, 0.25]), np.array([0.25, 0.25, 0.25])]
-runs.append(run_FBPINN())
+# n_steps = 50000
+# n_hidden, n_layers = 16, 2
+# A, args = AllActiveSchedulerND, ()
+# for width in [0.1, 0.5, 0.7]:
+#     subdomain_ws = get_subdomain_ws(subdomain_xs, width)
+#     runs.append(run_FBPINN())
+# width="0.5thin"
+# subdomain_ws = [np.array([0.25, 0.25, 0.05, 0.25, 0.25]), np.array([0.25, 0.25, 0.25])]
+# runs.append(run_FBPINN())
 
-width="0.7avoid"
-subdomain_xs = [np.array([-1, -0.333, 0.333, 1]), np.array([0, 0.5, 1])]
-subdomain_ws = [np.array([0.35, 0.35, 0.35, 0.35]), np.array([0.35, 0.35, 0.35])]
-runs.append(run_FBPINN())
+# width="0.7avoid"
+# subdomain_xs = [np.array([-1, -0.333, 0.333, 1]), np.array([0, 0.5, 1])]
+# subdomain_ws = [np.array([0.35, 0.35, 0.35, 0.35]), np.array([0.35, 0.35, 0.35])]
+# runs.append(run_FBPINN())
 
 
 
@@ -141,17 +141,19 @@ if __name__ == "__main__":# required for multiprocessing
     # GLOBAL VARIABLES
     
     # parallel devices (GPUs/ CPU cores) to run on
-    DEVICES = [1,2,3]
+    # DEVICES = [1,1,1]
     
     
-    # RUN
+    # # RUN
     
-    for i,(c,_) in enumerate(runs): print(i,c)
-    print("%i runs\n"%(len(runs)))
+    # for i,(c,_) in enumerate(runs): print(i,c)
+    # print("%i runs\n"%(len(runs)))
     
-    if "local" not in socket.gethostname().lower():
-        jobs = [(DEVICES, c, t, i) for i,(c,t) in enumerate(runs)]
-        with multiprocess.Pool(processes=len(DEVICES)) as pool:
-            pool.starmap(train_models_multiprocess, jobs)
-        
-        
+    # if "local" not in socket.gethostname().lower():
+    #     jobs = [(DEVICES, c, t, i) for i,(c,t) in enumerate(runs)]
+    #     print("jobs:---------", jobs)
+    #     with multiprocess.Pool(processes=len(DEVICES)) as pool:
+    #         pool.starmap(train_models_multiprocess, jobs)
+    ct, PINNTrainert = runs[0]
+    run = PINNTrainert(ct)# train PINN
+    run.train()
