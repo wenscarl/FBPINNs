@@ -105,15 +105,16 @@ random = False
 
 # Burgers
 
-P = problems.Burgers2D()
-subdomain_xs = [np.array([-1, -0.5, 0, 0.5, 1]), np.array([0, 0.5, 1])]
-boundary_n = (1,)
+# P = problems.WaveEquation2D(c="gaussian", source_sd=0.3) # Gaussian
+P = problems.WaveEquation2D() # constant
+subdomain_xs = [np.array([-10, -3.33, 3.33, 10]), np.array([0, 2.5, 5, 7.5, 10])]
+boundary_n = (0.3,)
 y_n = (0,1)
-batch_size = (200,200)
-batch_size_test = (400,400)
+batch_size = (120, 40)
+batch_size_test = (100,10)
 
-n_steps = 50000
-n_hidden, n_layers = 64, 4
+n_steps = 75000
+n_hidden, n_layers = 128, 5
 runs.append(run_PINN())
 
 # n_steps = 50000
