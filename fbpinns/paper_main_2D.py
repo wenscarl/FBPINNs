@@ -106,7 +106,7 @@ random = False
 # Burgers
 
 # P = problems.WaveEquation2D(c="gaussian", source_sd=0.3) # Gaussian
-P = problems.WaveEquation2D() # constant
+P = problems.FDTD1D() # constant
 subdomain_xs = [np.array([-10, -3.33, 3.33, 10]), np.array([0, 2.5, 5, 7.5, 10])]
 boundary_n = (0.3,)
 y_n = (0,1)
