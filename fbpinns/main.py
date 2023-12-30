@@ -344,6 +344,14 @@ class PINNTrainer(_Trainer):
         if (i + 1) % c.TEST_FREQ == 0:
             
             # save figures
+ #           pdb.set_trace()
+            if (i + 1) // c.TEST_FREQ == 12:
+ #             pdb.set_trace()
+              Hy = y_full_raw[:,0:1].cpu()
+              Ez = y_full_raw[:,1:2].cpu()
+              np.savetxt('hy.txt', Hy.data.numpy())
+              np.savetxt('ez.txt', Ez.data.numpy())
+
             fs = plot_main.plot_PINN(x_test, yj_true,   x, yj,   yj_full, y_full_raw,   yj_test_losses,   c, i + 1)
             if fs is not None: self._save_figs(i, fs)
             
@@ -354,7 +362,7 @@ class PINNTrainer(_Trainer):
     def _test_step(self, x_test, yj_true,   x, yj,   model, c, i, mstep, fstep, writer, yj_test_losses):# use separate function to ensure computational graph/memory is released
         
         # get full model solution using test data
-        pdb.set_trace()
+#        pdb.set_trace()
         yj_full, y_full_raw = full_model_PINN(x_test, model, c)
         print(x_test.shape, yj_true[0].shape, yj_full[0].shape)
         
@@ -372,6 +380,7 @@ class PINNTrainer(_Trainer):
         if (i + 1) % c.TEST_FREQ == 0:
             
             # save figures
+            pdb.set_trace()
             fs = plot_main.plot_PINN(x_test, yj_true,   x, yj,   yj_full, y_full_raw,   yj_test_losses,   c, i + 1)
             if fs is not None: self._save_figs(i, fs)
             

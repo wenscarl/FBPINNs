@@ -13,7 +13,7 @@ Created on Thu Apr  1 15:11:31 2021
 # the ansatz and the exact solution, if it exists.
 
 # Problem classes are used by constants.py when defining FBPINN / PINN problems (and subsequently main.py)
-
+import pdb
 import numpy as np
 import torch
 
@@ -402,6 +402,118 @@ class Burgers2D(_Problem):
         
         return y, y, y, y# skip computing analytical gradients
 
+class FDTD1D(_Problem):
+    """Solves the FDTD 1D equation
+        u = [Hy, Ez]
+        d Hy    dEz
+        ---- - ----  =  0
+        dt       dx
+
+        d Ez    dHy
+        ---- - ----  =  0
+        dt       dx
+ 
+        Boundary conditions:
+        Ez(x,0) = exp( -(1/2)((x/sd)^2) )
+        du
+        --(x,0) = 0
+        dt
+    """
+    
+    @property
+    def name(self):
+        return "FDTD1D_%s"%(self._cname)
+    
+    def __init__(self, c=1, source_sd=0.2):
+        
+        # input params
+        if isinstance(c, (float, int)):
+            self.c, self._c0, self._cname = self._constant_c, c, "s%sc%s"%(source_sd,c)
+        elif c == "gaussian":
+            self.c, self._c0, self._cname = self._gaussian_c, 1, "s%sc%s"%(source_sd,c)
+        else:
+            raise Exception("ERROR: c input not recognised! %s"%(c))
+        self.source_sd = source_sd
+        
+        # dimensionality of x and y
+        self.d = (2,2)
+        
+    def physics_loss(self, x, y, j0_hy, j2_hy, j0_ez, j2_ez):
+        Hy = y[:,0:1]
+        Ez = y[:,1:2]
+      #  pdb.set_trace()
+        physics_hy = (j0_hy[:,0]) - j2_ez[:,0]# be careful to slice correctly (transposed calculations otherwise (!))
+        physics_ez = (j0_ez[:,0]) - j2_hy[:,0]# be careful to slice correctly (transposed calculations otherwise (!))
+        return losses.l2_loss(physics_hy, 0) + losses.l2_loss(physics_ez, 0)  
+
+    def get_gradients(self, x, y):
+        j_hy = torch.autograd.grad(y[:,0:1], x, torch.ones_like(y[:,0:1]), create_graph=True)[0]
+        j_ez = torch.autograd.grad(y[:,1:2], x, torch.ones_like(y[:,1:2]), create_graph=True)[0]
+        j0_hy, j2_hy = j_hy[:,0:1], j_hy[:,1:2]
+        j0_ez, j2_ez = j_ez[:,0:1], j_ez[:,1:2]
+        return y, j0_hy, j2_hy, j0_ez, j2_ez
+ 
+    def boundary_condition(self, x, y, j0_hy, j2_hy, j0_ez, j2_ez, sd):
+        
+        # Apply u = tanh^2((t-0)/sd)*NN + sigmoid((d-t)/sd)*exp( -(1/2)((x/sd)^2) )  ansatz
+        
+        t2, jt2, jjt2 = boundary_conditions.tanh2_2(x[:,1:2], 0, sd)
+        s, js, jjs   = boundary_conditions.sigmoid_2(-x[:,1:2], -2*sd, 0.2*sd)# beware (!) this gives correct 2nd order gradients but negative 1st order (sign flip!)
+        
+        m0 = 0; s0 = self.source_sd
+        xn0 = (x[:,0:1]-m0)/s0
+        exp = torch.exp(-0.5*(xn0**2))
+        f = exp
+        y_new = y.clone().detach()
+
+        y_new[:,1:2] = t2*y[:,1:2] + s*f
+        y_new[:,0:1] = t2*y[:,0:1]
+        j0_hy_new = t2 * j0_hy
+        j2_hy_new = jt2 * y[:,0:1] + t2 * j2_hy
+        j0_ez_new = t2 * j0_ez + s * f * (-xn0/s0)
+        j2_ez_new = jt2 * y[:,1:2] + t2 * j2_ez + js * f
+        return y_new, j0_hy_new, j2_hy_new, j0_ez_new, j2_ez_new
+        
+    def exact_solution(self, x, batch_size):
+        
+        # use the burgers_solution code to compute analytical solution
+        xmin,xmax = x[:,0].min().item(), x[:,0].max().item()
+        tmin,tmax = x[:,1].min().item(), x[:,1].max().item()
+        vx = np.linspace(xmin,xmax,batch_size[0])
+        vt = np.linspace(tmin,tmax,batch_size[1])
+        vu = burgers_viscous_time_exact1(self.nu, len(vx), vx, len(vt), vt)
+        y = torch.tensor(vu.flatten(), device=x.device).unsqueeze(1)
+        
+        return y, y, y, y# skip computing analytical gradients
+    
+    def _gaussian(self, x, mu, sd, a):
+        return a*torch.exp(-0.5*( ((x[:,0:1]-mu[0])/sd[0])**2 ) )
+    
+    def _gaussian_c(self, x):
+        "Defines a hard-coded mixture of gaussians velocity model over [-10,10]"
+        
+        mus = np.array([[3],
+                        [-5],
+                        [-2],
+                        [3]])
+        sds = np.array([[3],
+                        [4],
+                        [2],
+                        [3]])
+        aas = self._c0*np.array([-0.7, -0.6, 0.7, 0.6])
+        
+        cs = []
+        for mu, sd, a in zip(mus, sds, aas):
+            cs.append(self._gaussian(x, mu, sd, a))
+        c = self._c0 + torch.sum(torch.stack(cs, -1), -1)
+        
+        return c
+    
+    def _constant_c(self, x):
+        "Defines a constant velocity model"
+        
+        return self._c0*torch.ones((x.shape[0],1), dtype=x.dtype, device=x.device)
+
 class WaveEquation2D(_Problem):
     """Solves the time-dependent 2D wave equation
         d^2 u     1  d^2 u
@@ -431,7 +543,7 @@ class WaveEquation2D(_Problem):
         self.source_sd = source_sd
         
         # dimensionality of x and y
-        self.d = (2,1)
+        self.d = (2,2)
         
         
     # def physics_loss(self, x, y, j0, j1, jj0):
@@ -440,7 +552,7 @@ class WaveEquation2D(_Problem):
     #     return losses.l2_loss(physics, 0)
 
     def physics_loss(self, x, y, j2, jj0, jj2):
-        
+ #       pdb.set_trace()
         physics = (jj0[:,0]) - (1/(self.c(x)[:,0]**2))*jj2[:,0]# be careful to slice correctly (transposed calculations otherwise (!))
         return losses.l2_loss(physics, 0)    
         
@@ -453,8 +565,8 @@ class WaveEquation2D(_Problem):
         
     #     return y, j0, j1, jj0
     def get_gradients(self, x, y):
-        
-        j =  torch.autograd.grad(y, x, torch.ones_like(y), create_graph=True)[0]
+#        pdb.set_trace()
+        j =  torch.autograd.grad(y[:,0:1], x, torch.ones_like(y[:,0:1]), create_graph=True)[0]
         j0, j2 = j[:,0:1], j[:,1:2]
         jj0 = torch.autograd.grad(j0, x, torch.ones_like(j0), create_graph=True)[0][:,0:1]
         jj2 = torch.autograd.grad(j2, x, torch.ones_like(j2), create_graph=True)[0][:,1:2]
