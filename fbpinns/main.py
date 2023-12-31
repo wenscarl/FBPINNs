@@ -345,10 +345,12 @@ class PINNTrainer(_Trainer):
             
             # save figures
  #           pdb.set_trace()
-            if (i + 1) // c.TEST_FREQ == 12:
+            if (i + 1) // c.TEST_FREQ == 4:
  #             pdb.set_trace()
-              Hy = y_full_raw[:,0:1].cpu()
-              Ez = y_full_raw[:,1:2].cpu()
+              Hx = y_full_raw[:,0:1].cpu()
+              Hy = y_full_raw[:,1:2].cpu()
+              Ez = y_full_raw[:,2:3].cpu()
+              np.savetxt('hx.txt', Hx.data.numpy())
               np.savetxt('hy.txt', Hy.data.numpy())
               np.savetxt('ez.txt', Ez.data.numpy())
 

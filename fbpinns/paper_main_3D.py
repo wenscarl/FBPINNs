@@ -77,45 +77,45 @@ random = True
 
 # Wave equation c=1
 
-P = problems.WaveEquation3D(c=1, source_sd=0.2)
-subdomain_xs = [np.array([-1, -0.33, 0.33, 1]), np.array([-1, -0.33, 0.33, 1]), np.array([0, 0.5, 1])]
+P = problems.FDTD2D(c=1, source_sd=0.2)
+subdomain_xs = [np.array([-1, -0.33, 0.33, 1]), np.array([-1, -0.33, 0.33, 1]), np.array([0, 0.5, 1.0])]
 boundary_n = (0.2,)
 y_n = (0,1)
-batch_size = (30,30,30)
-batch_size_test = (100,100,10)
+batch_size = (40,40,40)
+batch_size_test = (100,100, 10)
 
-n_steps = 25000
-n_hidden, n_layers = 64, 4
+n_steps = 75000
+n_hidden, n_layers = 64,4
 runs.append(run_PINN())
 
-n_steps = 25000
-A, args = AllActiveSchedulerND, ()
-width = 0.9
-subdomain_ws = get_subdomain_ws(subdomain_xs, width)
-for n_hidden, n_layers in [(16, 2), (32, 3)]:
-    runs.append(run_FBPINN())
+#n_steps = 25000
+#A, args = AllActiveSchedulerND, ()
+#width = 0.9
+#subdomain_ws = get_subdomain_ws(subdomain_xs, width)
+#for n_hidden, n_layers in [(16, 2), (32, 3)]:
+#    runs.append(run_FBPINN())
 
 
 # Wave equation c=gaussian
 
-P = problems.WaveEquation3D(c="gaussian", source_sd=0.3)
-subdomain_xs = [np.array([-10, -3.33, 3.33, 10]), np.array([-10, -3.33, 3.33, 10]), np.array([0, 2.5, 5, 7.5, 10])]
-boundary_n = (0.3,)
-y_n = (0,1)
-batch_size = (58,58,58)
-batch_size_test = (100,100,10)
-
-n_steps = 75000
-n_hidden, n_layers = 128, 5
-runs.append(run_PINN())
-
-n_steps = 150000
-A, args = PlaneActiveSchedulerND, (np.array([0,]),[0,1])
-width = 0.9
-subdomain_ws = get_subdomain_ws(subdomain_xs, width)
-for n_hidden, n_layers in [(16, 2), (32, 3), (64, 4)]:
-    runs.append(run_FBPINN())
-
+#P = problems.WaveEquation3D(c="gaussian", source_sd=0.3)
+#subdomain_xs = [np.array([-10, -3.33, 3.33, 10]), np.array([-10, -3.33, 3.33, 10]), np.array([0, 2.5, 5, 7.5, 10])]
+#boundary_n = (0.3,)
+#y_n = (0,1)
+#batch_size = (58,58,58)
+#batch_size_test = (100,100,10)
+#
+#n_steps = 75000
+#n_hidden, n_layers = 128, 5
+#runs.append(run_PINN())
+#
+#n_steps = 150000
+#A, args = PlaneActiveSchedulerND, (np.array([0,]),[0,1])
+#width = 0.9
+#subdomain_ws = get_subdomain_ws(subdomain_xs, width)
+#for n_hidden, n_layers in [(16, 2), (32, 3), (64, 4)]:
+#    runs.append(run_FBPINN())
+#
 
 
 
@@ -125,18 +125,20 @@ if __name__ == "__main__":# required for multiprocessing
     
     # GLOBAL VARIABLES
     
-    # parallel devices (GPUs/ CPU cores) to run on
-    DEVICES = [2,3]
-    
-    
-    # RUN
-    
-    for i,(c,_) in enumerate(runs): print(i,c)
-    print("%i runs\n"%(len(runs)))
-    
-    if "local" not in socket.gethostname().lower():
-        jobs = [(DEVICES, c, t, i) for i,(c,t) in enumerate(runs)]
-        with multiprocess.Pool(processes=len(DEVICES)) as pool:
-            pool.starmap(train_models_multiprocess, jobs)
+#    # parallel devices (GPUs/ CPU cores) to run on
+#    DEVICES = [2,3]
+#    
+#    
+#    # RUN
+#    
+#    for i,(c,_) in enumerate(runs): print(i,c)
+#    print("%i runs\n"%(len(runs)))
+#    
+#    if "local" not in socket.gethostname().lower():
+#        jobs = [(DEVICES, c, t, i) for i,(c,t) in enumerate(runs)]
+#        with multiprocess.Pool(processes=len(DEVICES)) as pool:
+#            pool.starmap(train_models_multiprocess, jobs)
         
-        
+    ct, PINNTrainert = runs[0]
+    run = PINNTrainert(ct)# train PINN
+    run.train()       
