@@ -72,6 +72,14 @@ def sigmoid_2(x, mu, sd):
     
     return s, js, jjs
 
+def exp_decay(x, sd):
+   #exp(-(1/2)(1.5*t/sd)^2)
+   s = torch.exp(-0.5*(1.0)*(x/sd)**2)
+   js = -s * 1 /1.* x/(sd**2)
+   jjs = -1./1/(sd**2) * s + 1./1*x**2/sd**4 * s
+   return s, js, jjs
+   
+
 # helper analytical functions (fused)
 
 def tanh_tanh2_2(x, mu, sd):

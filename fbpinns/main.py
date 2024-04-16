@@ -310,9 +310,12 @@ class PINNTrainer(_Trainer):
     
         # apply boundary conditions
         yj = c.P.boundary_condition(x, *yj, *c.BOUNDARY_N)# problem-specific
+       
+        # apply initial conditions
+        #loss_init = c.P.initial_condition(x, y)
 
         # backprop loss
-        loss = c.P.physics_loss(x, *yj)# problem-specific
+        loss = c.P.physics_loss(x, *yj)# + loss_init# problem-specific
         loss.backward()
         optimizer.step()
         
@@ -345,10 +348,13 @@ class PINNTrainer(_Trainer):
             
             # save figures
  #           pdb.set_trace()
-            if (i + 1) // c.TEST_FREQ == 12:
+            if (i + 1) // c.TEST_FREQ == 10:
  #             pdb.set_trace()
-              Hy = y_full_raw[:,0:1].cpu()
-              Ez = y_full_raw[:,1:2].cpu()
+              print("xxxxxxxxxxxxxxxxxxxxxx", 'print to file')
+              Hx = y_full_raw[:,0:1].cpu()
+              Hy = y_full_raw[:,1:2].cpu()
+              Ez = y_full_raw[:,2:3].cpu()
+              np.savetxt('hx.txt', Hx.data.numpy())
               np.savetxt('hy.txt', Hy.data.numpy())
               np.savetxt('ez.txt', Ez.data.numpy())
 
