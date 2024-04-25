@@ -1064,7 +1064,6 @@ if __name__ == "__main__":
         ),
         ns=((50, 50, 50),),
         n_start=((50, 50, 1),),
-        n_boundary=((1, 1, 500),),
         n_test=(100, 100, 5),
         n_steps=15000,
         optimiser_kwargs=dict(learning_rate=1e-3),
