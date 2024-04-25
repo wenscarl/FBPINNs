@@ -22,7 +22,6 @@ def get_subdomain_ws(subdomain_xs, width):
     return [width*np.min(np.diff(x))*np.ones_like(x) for x in subdomain_xs]
 
 
-# main constants class
 
 class Constants(ConstantsBase):
 
@@ -60,20 +59,29 @@ class Constants(ConstantsBase):
         # Define neural network
         self.network = networks.FCN
         self.network_init_kwargs = dict(
-            layer_sizes=[1, 32, 1],
+            layer_sizes=[1,32,32,32,1],
             )
-
+        # self.network_init_kwargs1 = dict(
+        #     layer_sizes=[2, 32, 32, 32, 2],
+        # )
         # Define scheduler
         self.n_steps = 15000
         self.scheduler = schedulers.AllActiveSchedulerND
         self.scheduler_kwargs = dict()
-        #self.scheduler = schedulers.PointSchedulerRectangularND
-        #self.scheduler_kwargs = dict(
-        #    point=np.array([0.]),
+        # self.scheduler = schedulers.PointSchedulerRectangularND
+        # self.scheduler_kwargs = dict(
+        #    point=np.array([-2., 0.]),
         #    )
+        # self.scheduler = schedulers.LineSchedulerRectangularND
+        # self.scheduler_kwargs = dict(
+        #     point=np.array([0.]),
+        #     iaxis=1,
+        # )
 
         # Define optimisation parameters
         self.ns = ((60,),)# batch_shape for each training constraint
+        self.n_start = ((60,),)
+        self.n_boundary = ((60,),)
         self.n_test = (200,)# batch_shape for test data
         self.sampler = "grid"# one of ["grid", "uniform", "sobol", "halton"]
         self.optimiser = optax.adam
@@ -85,9 +93,9 @@ class Constants(ConstantsBase):
         # Define summary output parameters
         self.summary_freq    = 1000# outputs train stats to command line
         self.test_freq       = 1000# outputs test stats to plot / file / command line
-        self.model_save_freq = 10000
-        self.show_figures = True# whether to show figures
-        self.save_figures = False# whether to save figures
+        self.model_save_freq = 15000
+        self.show_figures = False# whether to show figures
+        self.save_figures = True# whether to save figures
         self.clear_output = False# whether to clear ipython output periodically
 
         # other constants
