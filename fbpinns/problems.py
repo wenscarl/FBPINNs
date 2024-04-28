@@ -527,74 +527,90 @@ class FDTD2D(Problem):
 
     @staticmethod
     def sample_constraints(all_params, domain, key, sampler, batch_shapes, start_batch_shapes, boundary_batch_shapes):
-        # physics loss
-        x_batch_phys = domain.sample_interior(all_params, key, sampler, batch_shapes[0])
-        required_ujs_phys = (
-            (0, (1,)),  # dHx / dy
-            (0, (2,)),  # dHx / dt
-            (1, (0,)),  # dHy / dx
-            (1, (2,)),  # dHy / dt
-            (2, (0,)),  # dE / dx
-            (2, (1,)),  # dE / dy
-            (2, (2,)),  # dE / dt
-        )
+        # # physics loss
+        # x_batch_phys = domain.sample_interior(all_params, key, sampler, batch_shapes[0])
+        # required_ujs_phys = (
+        #     (0, (1,)),  # dHx / dy
+        #     (0, (2,)),  # dHx / dt
+        #     (1, (0,)),  # dHy / dx
+        #     (1, (2,)),  # dHy / dt
+        #     (2, (0,)),  # dE / dx
+        #     (2, (1,)),  # dE / dy
+        #     (2, (2,)),  # dE / dt
+        # )
 
+        # # start loss
+        # x_batch_start = domain.sample_start(all_params, key, sampler, start_batch_shapes[0])
+        # x = x_batch_start[:, 0:1]  # 提取 x 坐标
+        # y = x_batch_start[:, 1:2]
+        # E_start = jnp.exp(-0.5 * (x ** 2 + y ** 2) / (0.1 ** 2))
+        # Hx_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
+        # Hy_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
+        # required_ujs_start = (
+        #     (0, ()),
+        #     (1, ()),
+        #     (2, ()),
+        # )
         # start loss
-        x_batch_start = domain.sample_start(all_params, key, sampler, start_batch_shapes[0])
-        x = x_batch_start[:, 0:1]  # 提取 x 坐标
-        y = x_batch_start[:, 1:2]
-        E_start = jnp.exp(-0.5 * (x ** 2 + y ** 2) / (0.1 ** 2))
-        Hx_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
-        Hy_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
+        x_batch_start = domain.sample_interior(all_params, key, sampler, batch_shapes[0])
+        y_start = FDTD2D.exact_solution(all_params, x_batch_start, batch_shapes[0])
+        Hx_start = y_start[:, 0].reshape(-1, 1)
+        Hy_start = y_start[:, 1].reshape(-1, 1)
+        E_start = y_start[:, 2].reshape(-1, 1)
         required_ujs_start = (
             (0, ()),
             (1, ()),
             (2, ()),
         )
-        # boundary loss
-        loc = -1
-        x_batch_boundary = domain.sample_boundary(all_params, key, sampler, boundary_batch_shapes[0], loc)
-        t = x_batch_boundary[:, 1]
-        E_boundary = jnp.zeros_like(t, dtype=jnp.float32).reshape(t.shape)
-        required_ujs_boundary = (
-            (2, ()),
-        )
-        return [[x_batch_phys, required_ujs_phys], [x_batch_start, Hx_start, Hy_start, E_start, required_ujs_start], [x_batch_boundary, E_boundary, required_ujs_boundary]]
 
+        # # boundary loss
+        # loc = -1
+        # x_batch_boundary = domain.sample_boundary(all_params, key, sampler, boundary_batch_shapes[0], loc)
+        # t = x_batch_boundary[:, 1]
+        # E_boundary = jnp.zeros_like(t, dtype=jnp.float32).reshape(t.shape)
+        # required_ujs_boundary = (
+        #     (2, ()),
+        # )
+        # return [[x_batch_phys, required_ujs_phys], [x_batch_start, Hx_start, Hy_start, E_start, required_ujs_start], [x_batch_boundary, E_boundary, required_ujs_boundary]]
+        return [[x_batch_start, Hx_start, Hy_start, E_start, required_ujs_start]]
     @staticmethod
     def loss_fn(all_params, constraints):
 
-        #phys loss
-        c = all_params["static"]["problem"]["c"]
-        sd = all_params["static"]["problem"]["sd"]
-        x_batch, dHxdy, dHxdt, dHydx, dHydt, dEdx, dEdy, dEdt = constraints[0]
-        #       jax.debug.print("CHECK {}", dHdt.shape)
-        phys1 = jnp.mean((dHxdt + dEdy) ** 2)
-        phys2 = jnp.mean((dHydt - dEdx) ** 2)
-        phys3 = jnp.mean((dEdt - dHydx + dHxdy) ** 2)
-        phys = phys1 + phys2 + phys3
-        #        jax.debug.print("phys {}", dezdx)
+        # #phys loss
+        # c = all_params["static"]["problem"]["c"]
+        # sd = all_params["static"]["problem"]["sd"]
+        # x_batch, dHxdy, dHxdt, dHydx, dHydt, dEdx, dEdy, dEdt = constraints[0]
+        # #       jax.debug.print("CHECK {}", dHdt.shape)
+        # phys1 = jnp.mean((dHxdt + dEdy) ** 2)
+        # phys2 = jnp.mean((dHydt - dEdx) ** 2)
+        # phys3 = jnp.mean((dEdt - dHydx + dHxdy) ** 2)
+        # phys = phys1 + phys2 + phys3
+        # #        jax.debug.print("phys {}", dezdx)
 
         #start loss
-        x_batch_start, Hxc, Hyc, Ec, Hx, Hy, E = constraints[1]
+        x_batch_start, Hxc, Hyc, Ec, Hx, Hy, E = constraints[0]
         if len(Ec):
             start = jnp.mean((jnp.squeeze(E) - Ec) **2 ) + jnp.mean((jnp.squeeze(Hx)-Hxc)**2) + jnp.mean((jnp.squeeze(Hy)-Hyc)**2)
         else:
             start = 0
 
-        # boundary loss
-        x_batch_boundary, Eb, EE = constraints[2]
-        if len(Eb):
-            boundary = jnp.mean((jnp.squeeze(EE) - Eb) ** 2)
-        else:
-            boundary = 0
-        return 1e2 * phys + 1e4 * start + 1e2 * boundary
+        # # boundary loss
+        # x_batch_boundary, Eb, EE = constraints[2]
+        # if len(Eb):
+        #     boundary = jnp.mean((jnp.squeeze(EE) - Eb) ** 2)
+        # else:
+        #     boundary = 0
+        # return 1e2 * phys + 1e4 * start + 1e2 * boundary
+        return start
 
+    # @staticmethod
+    # def exact_solution(all_params, x_batch, batch_shape):
+    #     key = jax.random.PRNGKey(0)
+    #     return jax.random.normal(key, (x_batch.shape[0], 3))
     @staticmethod
     def exact_solution(all_params, x_batch, batch_shape):
         key = jax.random.PRNGKey(0)
         return jax.random.normal(key, (x_batch.shape[0], 3))
-
 class WaveEquation1D(Problem):
     """Solves the time-dependent (2+1)D wave equation with constant velocity
         d^2 u     1  d^2 u

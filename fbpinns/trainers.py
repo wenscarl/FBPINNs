@@ -1062,7 +1062,7 @@ if __name__ == "__main__":
         network_init_kwargs=dict(
             layer_sizes=[3, 32, 3],
         ),
-        ns=((50, 50, 50),),
+        ns=((20, 20, 20),),
         n_start=((50, 50, 1),),
         n_boundary=((1, 1, 500),),
         n_test=(100, 100, 5),
