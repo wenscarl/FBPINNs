@@ -2,9 +2,7 @@
 name = "fbpinns"
 version = "0.2.0"
 description = "Finite basis physics-informed neural networks (FBPINNs)"
-readme = "README.md"
 requires-python ="~=3.9"
-license = {file = "LICENSE"}
 authors = [
   {name="Ben Moseley"},
 ]
