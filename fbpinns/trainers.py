@@ -992,7 +992,7 @@ if __name__ == "__main__":
 
     from fbpinns.constants import Constants, get_subdomain_ws
     from fbpinns.domains import RectangularDomainND
-    from fbpinns.problems import FDTD1D , FDTD2D
+    from fbpinns.problems import FDTD1D , FDTD2D, FDTD3D
     from fbpinns.decompositions import RectangularDecompositionND
     from fbpinns.networks import FCN
     from fbpinns.schedulers import LineSchedulerRectangularND
@@ -1048,7 +1048,7 @@ if __name__ == "__main__":
             xmin=np.array([-1, -1, 0]),
             xmax=np.array([1, 1, 1]),
         ),
-        problem=FDTD2D,
+        problem=FDTD3D,
         problem_init_kwargs=dict(
             c=1, sd=0.1,
         ),
@@ -1060,10 +1060,10 @@ if __name__ == "__main__":
         ),
         network=FCN,
         network_init_kwargs=dict(
-            layer_sizes=[3, 32, 3],
+            layer_sizes=[3, 32, 32, 32, 32, 32, 3],
         ),
-        ns=((20, 20, 20),),
-        n_start=((50, 50, 1),),
+        ns=((5, 5, 5),),
+        n_start=((5, 5, 1),),
         n_boundary=((1, 1, 500),),
         n_test=(100, 100, 5),
         n_steps=15000,
