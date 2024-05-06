@@ -1062,21 +1062,17 @@ if __name__ == "__main__":
         network_init_kwargs=dict(
             layer_sizes=[3, 32, 32, 32, 32, 32, 3],
         ),
-        ns=((5, 5, 5),),
-        n_start=((5, 5, 1),),
-        n_boundary=((1, 1, 500),),
+        ns=((50, 50, 1),),
+        n_start=((50, 50, 1),),
+        n_boundary=((50, 1, 50),),
         n_test=(100, 100, 5),
-        n_steps=15000,
+        n_steps=20000,
         optimiser_kwargs=dict(learning_rate=1e-3),
         summary_freq=200,
         test_freq=200,
-        show_figures=True,
+        show_figures=False,
         clear_output=True,
     )
-
-    # run = FBPINNTrainer(c)
-    # run.train()
-
     c["network_init_kwargs"] = dict(layer_sizes=[3, 128, 128, 3])
     run = PINNTrainer(c)
     run.train()

@@ -198,7 +198,7 @@ class RectangularDomainND(Domain):
         if sampler == "grid":
             assert xmin[0] <= loc <= xmax[0], "loc must be within the range defined by xmin[0] and xmax[0]"
             xs = [
-                jnp.array([loc]) if i == 0 or i == 1 else  # 对于第一个维度，在loc处取值
+                jnp.array([loc]) if i == 1 else  # 对于第一个维度，在loc处取值
                 jnp.linspace(xmin[i], xmax[i], b)  # 对于其他维度（包括第二个维度），按均匀间隔取样
                 for i, b in enumerate(batch_shape)
             ]

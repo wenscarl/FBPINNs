@@ -634,12 +634,7 @@ class FDTD3D(Problem):
         dt      dx     dy
 
         Boundary conditions:
-        E(x,0) = exp( -(1/2)((x/sd)^2) )
-        du
-        --(x,0) = 0
-        dt
-        Ezx[xsource, ysource] = (10 - 15 * np.cos(n * np.pi / 20) + 6 * np.cos(2 * n * np.pi / 20) - np.cos(3 * n * np.pi / 20)) / 64
-        Ezy[xsource, ysource] = (10 - 15 * np.cos(n * np.pi / 20) + 6 * np.cos(2 * n * np.pi / 20) - np.cos(3 * n * np.pi / 20)) / 64
+
     """
 
     @staticmethod
@@ -676,8 +671,15 @@ class FDTD3D(Problem):
             (1, ()),
             (2, ()),
         )
-
-        return [[x_batch_phys, required_ujs_phys], [x_batch_start, Hx_start, Hy_start, E_start, required_ujs_start]]
+        # boundary loss
+        loc = -1
+        x_batch_boundary = domain.sample_boundary(all_params, key, sampler, boundary_batch_shapes[0], loc)
+        t = x_batch_boundary[:,1:2]
+        E_boundary = jnp.zeros_like(t, dtype=jnp.float32).reshape(t.shape)
+        required_ujs_boundary = (
+            (2, ()),
+        )
+        return [[x_batch_phys, required_ujs_phys], [x_batch_start, Hx_start, Hy_start, E_start, required_ujs_start], [x_batch_boundary, E_boundary, required_ujs_boundary]]
 
     @staticmethod
     def loss_fn(all_params, constraints):
@@ -691,14 +693,18 @@ class FDTD3D(Problem):
 
         # start loss
         x_batch_start, Hxc, Hyc, Ec, Hx, Hy, E = constraints[1]
-
         if len(Ec):
             start = jnp.mean((E - Ec) ** 2) + jnp.mean((Hx - Hxc) ** 2) + jnp.mean((Hy - Hyc) ** 2)
         else:
             start = 0
 
-        return  phys + start
-
+        # boundary loss
+        x_batch_boundary, Eb, EE = constraints[2]
+        if len(Eb):
+            boundary = jnp.mean((EE - Eb) ** 2)
+        else:
+            boundary = 0
+        return 1e2 * phys + 1e4 * start + 1e2 * boundary
     @staticmethod
     def exact_solution(all_params, x_batch, batch_shape):
         key = jax.random.PRNGKey(0)
