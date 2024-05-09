@@ -410,12 +410,15 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = (xmin + xmax) / 2  # Compute the center of the rectangle
+        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
+        xy_center = np.array([[x_center, y_center]])
+        # Compute the center of the rectangle
         side_lengths = xmax - xmin
         radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
-        distances = cdist(x_batch_xy, [x_center], metric='euclidean')
+        distances = cdist(x_batch_xy, xy_center, metric='euclidean')
         mask = distances > radius  # Points outside the circle
         x_filtered = x_batch[mask.all(axis=1)]
 
@@ -455,12 +458,15 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = (xmin + xmax) / 2  # Compute the center of the rectangle
+        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
+        xy_center = np.array([[x_center, y_center]])
+        # Compute the center of the rectangle
         side_lengths = xmax - xmin
         radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
-        distances = cdist(x_batch_xy, [x_center], metric='euclidean')
+        distances = cdist(x_batch_xy, xy_center, metric='euclidean')
         mask = distances > radius  # Points outside the circle
         x_filtered = x_batch[mask.all(axis=1)]
 
@@ -497,12 +503,15 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = (xmin + xmax) / 2  # Compute the center of the rectangle
+        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
+        xy_center = np.array([[x_center, y_center]])
+        # Compute the center of the rectangle
         side_lengths = xmax - xmin
         radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
-        distances = cdist(x_batch_xy, [x_center], metric='euclidean')
+        distances = cdist(x_batch_xy, xy_center, metric='euclidean')
         mask = jnp.abs(distances - radius) <= 0.001  # Points outside the circle
         x_filtered = x_batch[mask.all(axis=1)]
 
