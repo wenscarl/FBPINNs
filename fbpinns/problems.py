@@ -7,6 +7,7 @@ Each problem class must define the NotImplemented methods.
 This module is used by constants.py (and subsequently trainers.py)
 """
 
+import pdb
 import jax.nn
 import jax.numpy as jnp
 import numpy as np
@@ -16,7 +17,7 @@ from fbpinns.util.logger import logger
 from fbpinns.traditional_solutions.analytical.burgers_solution import burgers_viscous_time_exact1
 from fbpinns.traditional_solutions.seismic_cpml.seismic_CPML_2D_pressure_second_order import seismicCPML2D
 from FDTD1DDD import FDTD1DD
-from FDTD2DDD import FDTD2DD
+#from FDTD2DDD import FDTD2DD
 
 
 class Problem:
@@ -536,7 +537,7 @@ class FDTD3D(Problem):
         x_batch_start = domain.sample_start2d_cycle(all_params, key, sampler, start_batch_shapes[0])
         x = x_batch_start[:, 0:1] # 提取 x 坐标
         y = x_batch_start[:, 1:2]
-        E_start = jnp.exp(-0.5 * (x ** 2 + y ** 2 ) / (0.1 ** 2))
+        E_start = jnp.exp(-0.5 * ((x-0.5) ** 2 + (y-0.5) ** 2 ) / (0.1 ** 2))
         Hx_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
         Hy_start = jnp.zeros_like(E_start, dtype=jnp.float32).reshape(E_start.shape)
         required_ujs_start = (
@@ -547,8 +548,11 @@ class FDTD3D(Problem):
         # boundary loss
         x_batch_boundary = domain.sample_boundary2d_cycle(all_params, key, sampler, boundary_batch_shapes[0])
         t = x_batch_boundary[:, 2:3]
+#        pdb.set_trace()
         E_boundary = jnp.zeros_like(t, dtype=jnp.float32).reshape(t.shape)
         required_ujs_boundary = (
+#            (0, ()),
+#            (1, ()),
             (2, ()),
         )
         # # boundary loss
@@ -582,10 +586,10 @@ class FDTD3D(Problem):
         # boundary loss
         x_batch_boundary, Eb, EE = constraints[2]
         if len(Eb):
-            boundary = jnp.mean((EE - Eb) ** 2)
+            boundary = jnp.mean((EE - Eb) ** 2)# + jnp.mean((HyE - Eb) ** 2) + jnp.mean((HxE - Eb) ** 2)
         else:
             boundary = 0
-        return 1e2 * phys + 1e4 * start + 1e2 * boundary
+        return 1e2 * phys + 1e4 * start + 1e3 * boundary
     @staticmethod
     def exact_solution(all_params, x_batch, batch_shape):
         key = jax.random.PRNGKey(0)

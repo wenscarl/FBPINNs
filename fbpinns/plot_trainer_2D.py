@@ -4,17 +4,20 @@ Defines plotting functions for 2D FBPINN / PINN problems
 This module is used by plot_trainer.py (and subsequently trainers.py)
 """
 
+import pdb
 import matplotlib.pyplot as plt
 
 from fbpinns.plot_trainer_1D import _plot_setup, _to_numpy
 
 def _plot_test_im(u_test, xlim, ulim, n_test, it=None):
+#    pdb.set_trace()
     u_test = u_test.reshape(n_test)
     if it is not None:
         u_test = u_test[:,:,it]# for 3D
     plt.imshow(u_test.T,# transpose as jnp.meshgrid uses indexing="ij"
-               origin="lower", extent=(xlim[0][0], xlim[1][0], xlim[0][1], xlim[1][1]),
-               cmap="viridis")
+               extent=(xlim[0][0], xlim[1][0], xlim[0][1], xlim[1][1]),
+               origin='lower',
+               cmap="RdBu")
     plt.colorbar()
     plt.xlim(xlim[0][0], xlim[1][0])
     plt.ylim(xlim[0][1], xlim[1][1])

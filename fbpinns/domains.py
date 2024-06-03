@@ -7,7 +7,7 @@ Each domain class must define the NotImplemented methods.
 This module is used by constants.py (and subsequently trainers.py)
 """
 
-import jax
+import jax, pdb
 import jax.numpy as jnp
 import numpy as np
 import scipy.stats
@@ -410,16 +410,30 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        x_center = xmin[0] + (1 / 2) * (xmax[0] - xmin[0])
         y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
         xy_center = np.array([[x_center, y_center]])
         # Compute the center of the rectangle
         side_lengths = xmax - xmin
-        radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
+        radius = np.min(side_lengths) / 4.0  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
         distances = cdist(x_batch_xy, xy_center, metric='euclidean')
         mask = distances > radius  # Points outside the circle
+
+
+#        x_coords = x_batch_xy[:,0]
+#        y_coords = x_batch_xy[:,1]
+#        side_length = radius
+#        left_boundary = x_center - side_length / 2
+#        right_boundary = x_center + side_length / 2
+#        top_boundary = y_center + side_length / 2
+#        bottom_boundary = y_center - side_length / 2
+#        mask = (x_coords >= left_boundary) & (x_coords <= right_boundary) & \
+#           (y_coords >= bottom_boundary) & (y_coords <= top_boundary)
+#        mask = ~mask
+#
+#        mask = mask.reshape(-1,1)
         x_filtered = x_batch[mask.all(axis=1)]
 
         return jnp.array(x_filtered)
@@ -458,18 +472,30 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        x_center = xmin[0] + (1 / 2) * (xmax[0] - xmin[0])
         y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
         xy_center = np.array([[x_center, y_center]])
         # Compute the center of the rectangle
         side_lengths = xmax - xmin
-        radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
+        radius = np.min(side_lengths) / 4.  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
         distances = cdist(x_batch_xy, xy_center, metric='euclidean')
         mask = distances > radius  # Points outside the circle
-        x_filtered = x_batch[mask.all(axis=1)]
 
+#        x_coords = x_batch_xy[:,0]
+#        y_coords = x_batch_xy[:,1]
+#        side_length = radius
+#        left_boundary = x_center - side_length / 2
+#        right_boundary = x_center + side_length / 2
+#        top_boundary = y_center + side_length / 2
+#        bottom_boundary = y_center - side_length / 2
+#        mask = (x_coords >= left_boundary) & (x_coords <= right_boundary) & \
+#           (y_coords >= bottom_boundary) & (y_coords <= top_boundary)
+#        mask = ~mask
+#        mask = mask.reshape(-1,1)
+
+        x_filtered = x_batch[mask.all(axis=1)]
         return jnp.array(x_filtered)
 
     def _rectangle_sampler2NDDD_cycle(key, sampler, xmin, xmax, batch_shape):
@@ -503,18 +529,86 @@ class RectangularDomainND(Domain):
         xmin = xmin[:2]
         xmax = xmax[:2]
         x_batch_xy = x_batch[:, :2]
-        x_center = xmin[0] + (3 / 4) * (xmax[0] - xmin[0])
+        x_center = xmin[0] + (1 / 2) * (xmax[0] - xmin[0])
         y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
         xy_center = np.array([[x_center, y_center]])
         # Compute the center of the rectangle
         side_lengths = xmax - xmin
-        radius = np.min(side_lengths) / 5  # Use the shorter side's fifth as radius
+        radius = np.min(side_lengths) / 4.0  # Use the shorter side's fifth as radius
 
         # Filter out points that fall within the circle
-        distances = cdist(x_batch_xy, xy_center, metric='euclidean')
-        mask = jnp.abs(distances - radius) <= 0.001  # Points outside the circle
-        x_filtered = x_batch[mask.all(axis=1)]
+#        distances = cdist(x_batch_xy, xy_center, metric='cityblock')
+#        mask1 = jnp.abs(distances - radius) <= 0.001  # Points outside the circle
 
+        x_coords = x_batch_xy[:,0]
+        y_coords = x_batch_xy[:,1]
+        side_length = radius
+        left_boundary = x_center - side_length / 2
+        right_boundary = x_center + side_length / 2
+        top_boundary = y_center + side_length / 2
+        bottom_boundary = y_center - side_length / 2
+#        mask = ((jnp.abs(x_cod - x_center - 0.5* radius) <= 0.001 or jnp.abs(x_cod - x_center + 0.5* radius) <= 0.001) and y_cod <= y_center + 0.5*radius and y_cod >=y_center -0.5*radius) or \
+ #          ((jnp.abs(y_cod - y_center - 0.5* radius) <= 0.001 or jnp.abs(y_cod - y_center + 0.5* radius) <= 0.001) and x_cod <= x_center + 0.5*radius and x_cod >=x_center -0.5*radius)
+#        mask = ((jnp.abs(x_coords - left_boundary)<=0.001 | jnp.abs(x_coords - right_boundary)<=0.001) & \
+#           (y_coords >= bottom_boundary) & (y_coords <= top_boundary) ) | \
+#           ((jnp.abs(y_coords - bottom_boundary)<=0.001 | jnp.abs(y_coords - top_boundary)<=0.001) & \
+#           (x_coords >= left_boundary) & (x_coords <= right_boundary) )
+#        mask = mask.reshape(-1,1)
+                
+        
+      #  pdb.set_trace()
+      #  x_filtered = x_batch[mask.all(axis=1)]
+        def generate_square_boundary_points(center, side_length, num_points_per_side=10):
+          """
+          Generate points on the boundary of a square.
+
+          Args:
+          - center: Tuple (x, y) representing the center of the square.
+          - side_length: Length of the side of the square.
+          - num_points_per_side: Number of points to generate on each side.
+
+          Returns:
+          - boundary_points: Array of shape (4 * num_points_per_side, 2) containing the boundary points.
+          """
+          # Calculate the coordinates of the vertices of the square
+          half_side_length = side_length / 2
+          vertices = [(center[0] - half_side_length *1 , center[1] - half_side_length),  # Bottom left
+                      (center[0] + half_side_length *1, center[1] - half_side_length),  # Bottom right
+                      (center[0] + half_side_length *1, center[1] + half_side_length),  # Top right
+                      (center[0] - half_side_length *1, center[1] + half_side_length)]  # Top left
+
+          # Generate points along each side of the square
+          boundary_points = []
+          for i in range(4):
+              start_point = vertices[i]
+              end_point = vertices[(i + 1) % 4]
+              side_points = np.linspace(start_point, end_point, num_points_per_side + 1)
+              boundary_points.extend(side_points[:-1].tolist())  # Exclude the last point to avoid duplicates
+
+          return boundary_points
+
+        def generate_circular_boundary_points(center, r, num_points=10):
+          cx = center[0]
+          cy = center[1]
+          theta = np.linspace(0, 2*np.pi, num_points)
+          x = cx + r * np.cos(theta)
+          y = cy + r * np.sin(theta)
+          circle_points = np.column_stack((x, y))
+          return circle_points.tolist()
+#        pdb.set_trace()
+        #pboundary = generate_square_boundary_points([x_center, y_center], side_length, 100)
+        pboundary = generate_circular_boundary_points([x_center, y_center], radius, 400)
+
+ #       pdb.set_trace()
+        def foo(input_list):
+          expanded_list = []
+          hw = np.linspace(0, 1, 40)
+          for sublist in input_list:
+            for i in hw:
+              expanded_list.append(sublist + [i])
+          return expanded_list
+        x_filtered = foo(pboundary)
+  #      pdb.set_trace()
         return jnp.array(x_filtered)
 
 if __name__ == "__main__":

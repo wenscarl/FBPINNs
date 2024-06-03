@@ -7,7 +7,7 @@ To train a FBPINN / PINN, use a Constants object to set up the problem and defin
 to one of the trainer classes defined here
 """
 
-import time
+import time, pdb
 from functools import partial
 
 import jax
@@ -21,6 +21,7 @@ from fbpinns.trainers_base import _Trainer
 from fbpinns import networks, plot_trainer
 from fbpinns.util.logger import logger
 from fbpinns.util.jax_util import tree_index, total_size, str_tensor, partition, combine
+from scipy.spatial.distance import cdist
 
 # LABELLING CONVENTIONS
 
@@ -970,6 +971,22 @@ class PINNTrainer(_Trainer):
 
         # get PINN solution using test data
         u_test, u_raw_test = PINN_model_jit(all_params, x_batch_test, model_fns, verbose=False)
+ #       pdb.set_trace()
+        xmin = [-1.0, -1.0]
+        xmax = [1.0, 1.0]
+
+        x_batch_xy = x_batch_test[:, :2]
+        x_center = xmin[0] + (1 / 2) * (xmax[0] - xmin[0])
+        y_center = xmin[1] + (1 / 4) * (xmax[1] - xmin[1])
+        xy_center = np.array([[x_center, y_center]])
+        # Compute the center of the rectangle
+        side_lengths = xmax[0] - xmin[0]
+        radius = np.min(side_lengths) / 4.0  # Use the shorter side's fifth as radius
+        distances = cdist(x_batch_xy, xy_center, metric='euclidean')
+        mask = distances <= radius  # Points inside the circle
+#        pdb.set_trace()
+        u_test = u_test.at[np.squeeze(mask)].set(0.0)
+
 
         # get losses over test data
         l1 = jnp.mean(jnp.abs(u_exact-u_test)).item()
@@ -1038,15 +1055,15 @@ if __name__ == "__main__":
     # run.train()
 
     # fdtd2d
-    subdomain_xs = [np.linspace(-0.5, 0.5, 5), np.linspace(-0.5, 0.5, 5), np.linspace(0, 1, 5)]
+    subdomain_xs = [np.linspace(-1, 1, 5), np.linspace(-1, 1, 5), np.linspace(0, 2, 3)]
     subdomain_ws = get_subdomain_ws(subdomain_xs, 1.9)
 
     c = Constants(
         run="test",
         domain=RectangularDomainND,
         domain_init_kwargs=dict(
-            xmin=np.array([-0.5, -0.5, 0]),
-            xmax=np.array([0.5, 0.5, 1]),
+            xmin=np.array([-1, -1, 0]),
+            xmax=np.array([1, 1, 2]),
         ),
         problem=FDTD3D,
         problem_init_kwargs=dict(
@@ -1062,15 +1079,15 @@ if __name__ == "__main__":
         network_init_kwargs=dict(
             layer_sizes=[3, 32, 32, 32, 32, 32, 3],
         ),
-        ns=((100, 100, 50),),
-        n_start=((500, 500, 1),),
+        ns=((50, 50, 30),),
+        n_start=((100, 100, 1),),
         # n_boundary=((100, 1, 50),),
-        n_boundary = ((600, 600, 200),),
-        n_test=(100, 100, 6),
-        n_steps=30000,
+        n_boundary = ((300, 300, 80),),
+        n_test=(100, 100, 20),
+        n_steps=100000,
         optimiser_kwargs=dict(learning_rate=1e-3),
-        summary_freq=200,
-        test_freq=200,
+        summary_freq=20000,
+        test_freq=10000,
         show_figures=False,
         clear_output=True,
     )
